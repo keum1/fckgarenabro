@@ -3,22 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My First Mini App</title>
+    <title>CODM Account Checker</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
             padding: 20px;
             background-color: #f0f0f0;
+            margin: 0;
         }
         h1 {
             color: #333;
+            text-align: center;
+        }
+        textarea, input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #0088cc;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #006699;
+        }
+        #logOutput {
+            background-color: white;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            margin-top: 10px;
         }
     </style>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <h1>Hello from my Mini App!</h1>
-    <script src="script.js"></script>
+    <h1>CODM Account Checker</h1>
+    <textarea id="comboInput" rows="5" placeholder="Enter combos (e.g., user:pass, one per line)"></textarea>
+    <input type="number" id="threadsInput" min="1" placeholder="Number of threads" value="1">
+    <button onclick="startChecking()">Start Checking</button>
+    <div id="logOutput"></div>
+
+    <script>
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+
+        let pollingInterval;
+
+        function startChecking() {
+            const comboData = document.getElementById('comboInput').value;
+            const threads = parseInt(document.getElementById('threadsInput').value);
+            if (!comboData || threads < 1) {
+                alert('Please enter valid combos and thread count.');
+                return;
+            }
+
+            fetch('https://codm-checker-api.yourusername.repl.co/check', {  // Replace with your Replit URL
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ combo_data: comboData, threads: threads })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('logOutput').innerText = data.error;
+                } else {
+                    startLogPolling();
+                }
+            })
+            .catch(error => {
+                document.getElementById('logOutput').innerText = 'Error: ' + error;
+            });
+        }
+
+        function startLogPolling() {
+            clearInterval(pollingInterval);
+            const logOutput = document.getElementById('logOutput');
+            pollingInterval = setInterval(() => {
+                fetch('https://codm-checker-api.yourusername.repl.co/logs')
+                    .then(response => response.json())
+                    .then(data => {
+                        logOutput.innerHTML = data.logs.join('<br>');
+                        logOutput.scrollTop = logOutput.scrollHeight;
+                    });
+            }, 2000);  // Poll every 2 seconds
+        }
+    </script>
 </body>
 </html>
